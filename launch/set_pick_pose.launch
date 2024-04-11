@@ -1,0 +1,6 @@
+<launch>
+
+  <node name="set_pick_pose" pkg="my_panda_controller_example" type="set_pick_pose.py" respawn="false" output="screen">
+  </node>
+
+</launch>

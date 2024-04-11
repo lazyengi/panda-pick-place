@@ -1,0 +1,7 @@
+<launch>
+
+  <rosparam file="$(find my_panda_controller_example)/config/pick_place.yaml" />
+  <node name="my_panda_controller_example" pkg="my_panda_controller_example" type="panda_pick_place.py" respawn="false" output="screen">
+  </node>
+
+</launch>
