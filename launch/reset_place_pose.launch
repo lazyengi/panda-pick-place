@@ -1,7 +1,7 @@
 <launch>
 
-  <rosparam file="$(find my_panda_controller_example)/config/pick_place.yaml" />
-  <node name="reset_place_pose" pkg="my_panda_controller_example" type="reset_place_pose.py" respawn="false" output="screen">
+  <rosparam file="$(find panda_pick_place)/config/pick_place.yaml" />
+  <node name="reset_place_pose" pkg="panda_pick_place" type="reset_place_pose.py" respawn="false" output="screen">
   </node>
 
 </launch>

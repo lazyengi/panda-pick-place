@@ -1,7 +1,13 @@
 <launch>
 
-  <rosparam file="$(find my_panda_controller_example)/config/pick_place.yaml" />
-  <node name="my_panda_controller_example" pkg="my_panda_controller_example" type="panda_pick_place.py" respawn="false" output="screen">
+  <rosparam file="$(find panda_pick_place)/config/pick_place.yaml" />
+  <node name="panda_pick_place" pkg="panda_pick_place" type="panda_pick_place.py" respawn="false" output="screen">
+  </node>
+  <node name="panda_vision" pkg="panda_pick_place" type="panda_vision.py" respawn="false" output="screen">
+  </node>
+  <node name="panda_controller" pkg="panda_pick_place" type="panda_controller.py" respawn="false" output="screen">
+  </node>
+  <node name="tf2_broadcaster" pkg="panda_pick_place" type="tf2_broadcaster.py" respawn="false" output="screen">
   </node>
 
 </launch>
