@@ -47,7 +47,6 @@ class Broadcaster:
 
 
     def broadcast_tf(self):
-        return
         br = tf2_ros.TransformBroadcaster()
         t = geometry_msgs.msg.TransformStamped()
 
