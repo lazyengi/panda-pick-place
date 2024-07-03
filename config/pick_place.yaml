@@ -4,17 +4,27 @@ panda_pick_place:
 
   # Parameters for arm control
   default_pick_pose: [0.44648204693628385, 0.004319999072208323, 0.3106450742604242, -0.9185850121673379, 0.39325053203483784, -0.034993854036316434, 0.018194082981383735]
-  default_place_pose: [0.04806365718602137, -0.6013653598919282, 0.40472378978081874, 0.38805635528506666, -0.9202025470517378, 0.048641291408388146, 0.016539718633904476]
-  default_velocity_scaling: 0.5
-  default_acceleration_scaling: 0.3
+  default_place_pose: [0.06688801320333734, -0.4730495145936559, 0.4398793254549035, 0.38634758491216326, -0.9218678834680287, 0.01666580463069389, 0.02484753546586415]
+  default_velocity_scaling_factor: 0.5
+  default_acceleration_scaling_factor: 0.3
+  gripper_closed_epsilon: 0.002
 
   # Parameters for the vision
   model: 
-    path: "/home/giuseppe/franka_ws/src/panda_vision_model/model/train3/weights/best.pt"
+    path: "/home/giuseppe/franka_ws/src/panda_vision_model/model/best.pt"
     # path: "/home/giuseppe/franka_ws/yolov8n.pt"
+
+  vision:
+    depth_epsilon: 0.05
+    depth_step: 5
 
   tf:
     rate_freq: 1000
     panda_ee_link: "panda_hand"
     camera_link: "camera_link"
     tf_matrix: [0, 1, 0, 0.069, -1, 0, 0, 0.018, 0, 0, 1, 0.038, 0, 0, 0, 1]
+  
+  gui:
+    width: 1500
+    height: 1200
+    columns_count: 6

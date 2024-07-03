@@ -7,7 +7,7 @@
   </node>
   <node name="panda_controller" pkg="panda_pick_place" type="panda_controller.py" respawn="false" output="screen">
   </node>
-  <node name="tf2_broadcaster" pkg="panda_pick_place" type="tf2_broadcaster.py" respawn="false" output="screen">
-  </node>
+  <!-- <node name="tf2_broadcaster" pkg="panda_pick_place" type="tf2_broadcaster.py" respawn="false" output="screen">
+  </node> -->
 
 </launch>
