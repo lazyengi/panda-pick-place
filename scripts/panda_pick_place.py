@@ -37,15 +37,18 @@ class PandaPickPlace:
         self.pick_pose.orientation.z = pick_pose_param[5]
         self.pick_pose.orientation.w = pick_pose_param[6]
 
-        place_pose_param = rospy.get_param("/panda_pick_place/default_place_pose")
-        self.place_pose = Pose()
-        self.place_pose.position.x = place_pose_param[0]
-        self.place_pose.position.y = place_pose_param[1]
-        self.place_pose.position.z = place_pose_param[2]
-        self.place_pose.orientation.x = place_pose_param[3]
-        self.place_pose.orientation.y = place_pose_param[4]
-        self.place_pose.orientation.z = place_pose_param[5]
-        self.place_pose.orientation.w = place_pose_param[6]
+        place_pose_param = rospy.get_param("/panda_pick_place/default_place_poses")
+        self.place_poses_count = rospy.get_param("/panda_pick_place/place_poses_count", 2)
+        self.place_poses = []
+        for i in range(self.place_poses_count):
+            self.place_poses.append(Pose())
+            self.place_poses[i].position.x = place_pose_param[i][0]
+            self.place_poses[i].position.y = place_pose_param[i][1]
+            self.place_poses[i].position.z = place_pose_param[i][2]
+            self.place_poses[i].orientation.x = place_pose_param[i][3]
+            self.place_poses[i].orientation.y = place_pose_param[i][4]
+            self.place_poses[i].orientation.z = place_pose_param[i][5]
+            self.place_poses[i].orientation.w = place_pose_param[i][6]
 
         # Register the pub and sub for the vision
         self.start_detection_pub = rospy.Publisher("/panda_vision/start_detection", DetectionRequest, queue_size=10)
@@ -287,7 +290,7 @@ class PandaPickPlace:
                 pub.publish(StatusHeader(status = "error", message = f"Error: {str(e)}"))
             return False
 
-    def go_to_place_pose(self, msg=None, pub=None) -> bool:
+    def go_to_place_pose(self, msg=None, pub=None, pose_index:int=0) -> bool:
         """
         Move the robot to the place position
         """
@@ -301,7 +304,7 @@ class PandaPickPlace:
             self.move_arm_group.clear_pose_targets()
 
             # Go to the place pose
-            success = self.move_arm_group.go(self.place_pose, wait=True)
+            success = self.move_arm_group.go(self.place_poses[pose_index], wait=True)
 
             if pub != None and success:
                 pub.publish(StatusHeader(status = "info", message = "I'm there!"))
@@ -335,8 +338,9 @@ class PandaPickPlace:
             rospy.set_param("/pick_pose", new_pick_pose)
 
             # Publish the status
-            pub.publish(StatusHeader(status = "error", message = f"Pick pose: {rospy.get_param('/pick_pose')}"))
+            rospy.loginfo(f"Pick pose: {rospy.get_param('/pick_pose')}")
 
+            pub.publish(StatusHeader(status = "success", message = f"Pick pose: {rospy.get_param('/pick_pose')}"))
         except Exception as e:
             rospy.sleep(0.4)
             pub.publish(StatusHeader(status = "error", message = f"Error setting the pose: {str(e)}"))
@@ -347,20 +351,23 @@ class PandaPickPlace:
         """
 
         # Avoiding the loog
-        if msg.status != "set_pick_pose":
+        if msg.status != "set_place_pose":
             return
 
         try:
-            # Set the place pose in the parameter server 
-            # Convert the current pose in a list of 7 floats
-            new_place_pose = self.move_arm_group.get_current_pose().pose
-            self.place_pose = new_place_pose
-            new_place_pose = [new_place_pose.position.x, new_place_pose.position.y, new_place_pose.position.z, new_place_pose.orientation.x, new_place_pose.orientation.y, new_place_pose.orientation.z, new_place_pose.orientation.w]
-            rospy.set_param("/place_pose", new_place_pose)    
+            for i in range(self.place_poses_count):
+                # Set the place pose in the parameter server 
+                # Convert the current pose in a list of 7 floats
+                new_place_pose = self.move_arm_group.get_current_pose().pose
+                self.place_poses[i] = new_place_pose
+                new_place_pose = [new_place_pose.position.x, new_place_pose.position.y, new_place_pose.position.z, new_place_pose.orientation.x, new_place_pose.orientation.y, new_place_pose.orientation.z, new_place_pose.orientation.w]
+                rospy.set_param(f"/place_pose_{i}", new_place_pose)    
 
-            # Publish the status
-            pub.publish(StatusHeader(status = "error", message = f"Place pose: {rospy.get_param('/place_pose')}"))
+                # Publish the status
+                rospy.loginfo(f"Place pose: {rospy.get_param('/place_pose')}")
+                rospy.wait_for_message("/panda_pick_place/set_place_pose", StatusHeader, timeout=30)
 
+            pub.publish(StatusHeader(status = "success", message = f"Place pose: {rospy.get_param('/place_pose')}"))
         except Exception as e:
             rospy.sleep(0.4)
             pub.publish(StatusHeader(status = "error", message = f"Error setting the pose: {str(e)}"))
@@ -443,26 +450,22 @@ class PandaPickPlace:
         """
         """
 
-        rotation_step = math.pi/16
+        rotation_step = rospy.get_param("/panda_pick_place/rotation_step", math.pi/16)
 
         # Get the current joint values
         current_joint_values = self.move_arm_group.get_current_joint_values()
 
         # Rotate rotation_step, detect and check if i increased or decreased the width
         self.rotate_gripper(current_joint_values[6] + rotation_step)
-        print("------------------------453")
         obj_detected = self.detect_object(obj_id=obj_id)
-        print("------------------------455")
 
         try:
             # If for this angle the object is already graspable return the angle
             if obj_detected.num_objects == 1 and obj_detected.sizes[0].width < 0.07:
-                print("------------------------459")
                 return current_joint_values[6] + rotation_step, obj_detected.sizes[0].width
             
             # If i minimized the width of the object, continue on this path
             if obj_detected.num_objects == 1 and (obj_detected.sizes[0].width > self.gripper_closed_epsilon and obj_detected.sizes[0].height > self.gripper_closed_epsilon) and obj_detected.sizes[0].width < current_width:
-                print("------------------------465")
                 min_width = obj_detected.sizes[0].width + 1 # So i can enter the while loop
                 min_angle = current_joint_values[6] + rotation_step
                 while obj_detected.num_objects == 1 and obj_detected.sizes[0].width > self.gripper_closed_epsilon and obj_detected.sizes[0].width < min_width:
@@ -470,9 +473,7 @@ class PandaPickPlace:
                     min_angle += rotation_step
                     print(min_angle)
                     self.rotate_gripper(min_angle + rotation_step)
-                    print("------------------------470")
                     obj_detected = self.detect_object(obj_id=obj_id, old_box=obj_detected.boxes[0])
-                    print("------------------------471")
 
                 print(f"Min angle found: {min_angle}")
                 print(f"Min width found: {min_width}")
@@ -481,7 +482,6 @@ class PandaPickPlace:
             
             # If i increased the width of the object, continue on this path and then give the angle found rotated by -math.pi/2
             if obj_detected.num_objects == 1 and obj_detected.sizes[0].width > current_width:
-                print("------------------------483")
                 max_angle = current_joint_values[6] + rotation_step
                 min_height = obj_detected.sizes[0].height + 1 # So i can enter the while loop
                 while obj_detected.num_objects == 1 and (obj_detected.sizes[0].width > self.gripper_closed_epsilon and obj_detected.sizes[0].height > self.gripper_closed_epsilon) and obj_detected.sizes[0].height < min_height:
@@ -490,9 +490,7 @@ class PandaPickPlace:
 
                     current_joint_values = self.move_arm_group.get_current_joint_values()
                     self.rotate_gripper(max_angle + rotation_step)
-                    print("------------------------491")
                     obj_detected = self.detect_object(obj_id=obj_id, old_box=obj_detected.boxes[0])
-                    print("------------------------493")
 
                 print(f"Max angle found: {max_angle}")
                 print(f"Min height found: {min_height}")
@@ -500,7 +498,6 @@ class PandaPickPlace:
 
                 return max_angle - math.pi/2, min_height
             
-            print("------------------------497")
             return current_joint_values[6], current_width
         except Exception as e:
             print(f"Error finding the optimal gripper angle: {str(e)}")
@@ -678,7 +675,6 @@ class PandaPickPlace:
                     # Check if the object is too big to be grasped and try to find a better angle
                     if shortest_dimension >= 0.077:
                         # To start the algorithm, I need to be on the object rotated by gripper_axis_angle
-                        print("-------------------681")
                         gripper_axis_angle, optimal_width = self.find_optimal_gripper_angle(shortest_dimension, object.ids[0])
                         # current_joint_values = self.move_arm_group.get_current_joint_values()
                         # initial_gripper_angle = current_joint_values[6]
@@ -686,7 +682,6 @@ class PandaPickPlace:
                         print(f"Optimal gripper angle: {gripper_axis_angle}")
                         print(f"Optimal width: {optimal_width}")
                         if optimal_width > 0.077 or optimal_width < self.gripper_closed_epsilon:
-                            print("-------------------649")
                             if retry:
                                 return self.pick_place_routine(StatusHeader(status = "pick_place_routine"), pub, retry=False)
                             pub.publish(StatusHeader(status = "error", message = "The object is too big to be grasped"))
@@ -720,12 +715,9 @@ class PandaPickPlace:
                     try:
                         # Publish the debug message
                         self.debug_pub.publish(StatusHeader(status = "ask", message = "Waiting for the debug message"))
-                        print("-------------------695")
                         debug_msg = rospy.wait_for_message("/panda_pick_place/debug", StatusHeader, timeout=10)
 
-                        print("-------------------698")
                         if debug_msg.status == "wait":
-                            print("-------------------700")
                             go_msg = rospy.wait_for_message("/panda_pick_place/debug", StatusHeader, timeout=10)
                     except Exception as e:
                         print(f"Error waiting for the debug message: {str(e)}")
@@ -735,8 +727,10 @@ class PandaPickPlace:
 
                     # Check if the object is grasped
                     finger1_width = self.move_hand_group.get_current_joint_values()[0]
+                    finger2_width = self.move_hand_group.get_current_joint_values()[1]
                     print(f"Finger 1 width: {finger1_width}")
-                    if finger1_width < self.gripper_closed_epsilon:
+                    print(f"Finger 2 width: {finger2_width}")
+                    if finger1_width+finger2_width < self.gripper_closed_epsilon:
                         pub.publish(StatusHeader(status = "error", message = "Failed to grasp!"))
                         if retry:
                             return self.pick_place_routine(StatusHeader(status = "pick_place_routine"), pub, retry=False)
@@ -744,8 +738,7 @@ class PandaPickPlace:
                     
                     # Return to the pick pose
                     result_pick_pose = self.go_to_pick_pose()
-                    result_place_pose = self.go_to_pick_pose()
-                    if not result_pick_pose or not result_place_pose:
+                    if not result_pick_pose:
                         pub.publish(StatusHeader(status = "error", message = "Error moving to pick pose"))
                         return False
 
@@ -754,7 +747,7 @@ class PandaPickPlace:
                     pub.publish(StatusHeader(status = "done", message = "Object picked!"))
 
                     # Go to the place pose
-                    result = self.go_to_place_pose()
+                    result = self.go_to_place_pose(pose_index=object.classes[0])
                     if not result:
                         pub.publish(StatusHeader(status = "error", message = "Error moving to place pose"))
                         return False

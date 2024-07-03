@@ -258,6 +258,7 @@ class PandaVision:
                     detection_msg.sizes = [sizes]
 
                     detection_msg.ids = [int(results[0].boxes.id[max_index])]
+                    detection_msg.classes = [int(results[0].boxes.cls[max_index])]
 
                 else:
                     for i in range(len(results[0].boxes.conf)):
@@ -290,6 +291,7 @@ class PandaVision:
                             detection_msg.sizes.append(sizes)
 
                             detection_msg.ids.append(int(results[0].boxes.id[i]))
+                            detection_msg.classes.append(int(results[0].boxes.cls[i]))
 
                 # Set the status to (Success)
                 detection_msg.status = StatusHeader(status = "success", message = f"Detected {detection_msg.num_objects} out of {self.object_count} requested!") 
