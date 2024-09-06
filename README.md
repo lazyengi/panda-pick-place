@@ -24,4 +24,19 @@ This project is developed with [ROS Noetic](http://wiki.ros.org/noetic/Installat
 - [panda_pick_place_msgs](https://github.com/lazyengi/panda_pick_place_msgs)
 
 # Installation
-You should already have ROS Noetic installed. Follow also the getting started guides for franka_ros and realsense-ros. Clone or download panda_pick_place, panda_vision_model and panda_pick_place_msgs into \<your catkin workspace\>/src/ folder and build it.
+You should already have ROS Noetic installed. Follow also the getting started guides for franka_ros and realsense-ros. 
+
+You should have installed MoveIt 1, follow the [getting start guide](https://moveit.github.io/moveit_tutorials/doc/getting_started/getting_started.html) otherwise. If you want to have my same MoveIt configuration, clone the repo of my panda_moveit_config.
+
+Follow the instructions on the github page of the the realsense-ros to install the nodes of the camera.
+
+Clone or download panda_pick_place, panda_vision_model and panda_pick_place_msgs into \<your catkin workspace\>/src/ folder and build it.
+
+If you want to train your own model for the computer vision, my tips is to install yolo by following this [guide](https://docs.ultralytics.com/it/quickstart/#conda-docker-image).
+
+# Project stucture
+By launching the panda_pick_place.launch file you are going to run three nodes:
+
+1. The vision node (panda_vision)
+2. The robot controller node (panda_pick_place)
+3. The control hub (panda_controller)
