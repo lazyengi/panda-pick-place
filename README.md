@@ -40,3 +40,56 @@ By launching the panda_pick_place.launch file you are going to run three nodes:
 1. The vision node (panda_vision)
 2. The robot controller node (panda_pick_place)
 3. The control hub (panda_controller)
+
+The computer vision node provides the topics that serve the vision scope. It reads the image from the Intel RealSense node and processes the image data to determine the object's spatial position.
+
+All the topics about the robot control are from the panda_pick_place node.
+
+Eventually the control hub provides a guid to easily interact with the robot and also synchronize the other nodes. 
+
+# Available Configurations
+Under the config folder, there is the pick_place.yaml file. In this file you can customize:
+- handshaking_freq: the frequency of the handshaking between the controller, the pick_place node and the vision node;
+- default_pick_pose: you can choose a default pick pose that you can then change at runtime by the action provided in the control hub. You can choose only one pick pose. All the poses of this file are in the joint space, thus an array of 7;
+- default_place_poses: you can set a list of place poses which index should correspond to the index of the class of the object detection. You can change these too from the control hub;
+- place_poses_count: the length of the default_place_poses list;
+- default_velocity_scaling_factor: is the valocity scaling factor of the arm. It's raccomanded not to go over 0.7;
+- default_acceleration_scaling_factor: is the acceleration scaling factor of the arm. It's raccomanded not to go over 0.7;
+- gripper_closed_epsilon: when the gripper closes around a thin object each finger has it's position and the sum of the two position is the width of the object grasped. So this param (which unit is meters) says that under <gripper_closed_epsilon> meters the gripper is considered closed without grasping an object. Can happen that when the gripper is closed, the width between fingers still result around 0.0005 meters;
+- rotation_step: when the arm chooses which object to grasp should know the position in the space but also the orientation. From the object detection you have only a box around the object with sides parallels to the image frame. With the fingers of the gripper in the configuration to grasp small object, you can grasp objects wide only 8 centimeters. So to choose the best angle, the arm makes multiple detection maximising or minimising the width of the bounding box. After each detection the hand of the arm rotates by <rotation_step>;
+- model/path: is the path of the object detection model. You can change it at runtime from the control hub;
+- vision/depth_epsilon: the Intel RealSense d435i camera has a infrared depth camera. So you can have some configuration of the objects on the table that creates some holes in the pointcloud. When the model carry out the detection I take the center of the bounding box with the highest confidence. Not to fail right away the detection I try to find a depth point around the center of the bounding box. If the pointcloud has a hole, the depth is at 0 meters. You can go on searching for a valid depth point until some depth over the <depth_epsilon>;
+
+// TODO image of the explanation
+
+- vision/depth_step: is the count of pixel to move from the previous point;
+- tf/rate_freq: the frequency of the broadcast of the transform matrix from the panda_hand to the camera_link frame by the tf2 broadcaster;
+- tf/panda_ee_link: the name of the end effector link fram of the robot;
+- tf/camera_link: the name of the camera frame;
+- tf/tf_matrix: the omogeneous transform matrix from the <panda_ee_link> to the <camera_link>;
+- gui/width: the width of the gui windows;
+- gui/heigth: the heigth of the gui windows;
+- guid/columns_count: the count of the columns of the gui
+
+# Run the project
+You have to run the robot interface node from panda_moveit_config package, by running:
+
+```
+roslaunch panda_moveit_config franka_control.launch  robot_ip:=<robot_ip> load_gripper:=true robot:=panda
+```
+
+make sure to insert your robot ip address.
+
+Then you have to run the camera node with the color camera aligned to the depth camera:
+
+```
+roslaunch realsense2_camera rs_camera.launch align_depth:=true
+```
+
+Now you can start the project by running:
+
+```
+roslaunch panda_pick_place panda_pick_place.launch
+```
+
+// TODO image of the control hub 

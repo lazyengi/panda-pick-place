@@ -350,23 +350,24 @@ class PandaVision:
         # If none of the values is valid, I move depth_step pixels up and check again
         #  
         depth_epsilon = rospy.get_param('/panda_pick_place/vision/depth_epsilon', 0.05)
-        depth_step = rospy.get_param('/panda_pick_place/vision/depth_step', 5)
+        depth_step = rospy.get_param('/panda_pick_place/vision/depth_step', 5) - 1
 
         print(f"Depth value: {depth_value} meters")
         i = 0
         while depth_value < depth_epsilon:
             # Move right
             if i % 4 == 0:
+                depth_step += depth_step
                 center_x += depth_step
             # Move down
             elif i % 4 == 1:
-                center_y += depth_step  
+                center_y += depth_step
             # Move left
             elif i % 4 == 2:
-                center_x -= depth_step  
+                depth_step += depth_step
+                center_x -= depth_step
             # Move up
             elif i % 4 == 3:
-                depth_step *= 2 # Double the step to not get stuck in the same point
                 center_y -= depth_step
 
             # Get the depth value of the point
@@ -375,8 +376,8 @@ class PandaVision:
             # Increment the counter
             i += 1
 
-            # If the counter is 4, break the loop
-            if i == 8:
+            # If the counter is 32 (4 loops), break the loop
+            if i == 32:
                 break
 
         print(f"Depth value: {depth_value} meters")
