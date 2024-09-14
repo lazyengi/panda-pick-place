@@ -1,4 +1,4 @@
-![logo università di Firenze](https://github.com/lazyengi/panda-pick-place/blob/master/assets/images/logo_unifi_500.jpg)
+![University of Florence logo](assets/images/logo_unifi_500.jpg)
 # Introduction
 
 <!-- TODO: Mettici la gif della demo-->
@@ -45,106 +45,111 @@ The computer vision node provides the topics that serve the vision scope. It rea
 
 All the topics about the robot control are from the `panda_pick_place` node.
 
-Eventually the control hub provides a guid to easily interact with the robot and also synchronize the other nodes. 
+Finally the control hub provides a guid to easily interact with the robot and also synchronize the other nodes. 
 
 # Available Configurations
-Under the config folder, there is the pick_place.yaml file. In this file you can customize:
-- **handshaking_freq**: the frequency of the handshaking between the controller, the pick_place node and the vision node;
-- default_pick_pose: you can choose a default pick pose that you can then change at runtime by the action provided in the control hub. You can choose only one pick pose. All the poses of this file are in the joint space, thus an array of 7;
-- **default_place_poses**: you can set a list of place poses which index should correspond to the index of the class of the object detection. You can change these too from the control hub;
-- **place_poses_count**: the length of the default_place_poses list;
-- **default_velocity_scaling_factor**: is the valocity scaling factor of the arm. It's raccomanded not to go over 0.7;
-- **default_acceleration_scaling_factor**: is the acceleration scaling factor of the arm. It's raccomanded not to go over 0.7;
-- **gripper_closed_epsilon**: when the gripper closes around a thin object each finger has it's position and the sum of the two position is the width of the object grasped. So this param (which unit is meters) says that under <gripper_closed_epsilon> meters the gripper is considered closed without grasping an object. Can happen that when the gripper is closed, the width between fingers still result around 0.0005 meters;
-- **rotation_step**: when the arm chooses which object to grasp should know the position in the space but also the orientation. From the object detection you have only a box around the object with sides parallels to the image frame. With the fingers of the gripper in the configuration to grasp small object, you can grasp objects wide only 8 centimeters. So to choose the best angle, the arm makes multiple detection maximising or minimising the width of the bounding box. After each detection the hand of the arm rotates by <rotation_step>;
-- **model/path**: is the path of the object detection model. You can change it at runtime from the control hub;
-- **vision/depth_epsilon**: the Intel RealSense d435i camera has a infrared depth camera. So you can have some configuration of the objects on the table that creates some holes in the pointcloud. When the model carry out the detection I take the center of the bounding box with the highest confidence. Not to fail right away the detection I try to find a depth point around the center of the bounding box. If the pointcloud has a hole, the depth is at 0 meters. You can go on searching for a valid depth point until some depth over the <depth_epsilon>;
+Under the `config` folder, there is the `pick_place.yaml` file. In this file you can customize:
 
-// TODO image of the explanation
+- **handshaking_freq**: the frequency of the handshaking between controller, pick and place node and vision node;
+- **default_pick_pose**: you can choose a default pick pose that you can then change at runtime by the action provided in the control hub. You can choose only one pick pose. All the poses of this file are in the joint space, thus an array of 7;
+- **default_place_poses**:You can set a list of place poses whose index should correspond to the index of the class of the object detection. You can change these too from the control hub.
+- **place_poses_count**: the length of the `default_place_poses` list;
+- **default_velocity_scaling_factor**: the velocity scaling factor of the arm. It's recommended not to go over 0.7;
+- **default_acceleration_scaling_factor**: the acceleration scaling factor of the arm. It's recommended not to go over 0.7;
+- **gripper_closed_epsilon**: when the gripper closes around a thin object each finger has its position and the sum of the two positions is the width of the object grasped. So this parameter (in meters) indicates that under `<gripper_closed_epsilon>` meters, the gripper is considered closed without grasping an object. It can happen that when the gripper is closed, the width between fingers still results in around 0.0005 meters;
+- **rotation_step**: when the arm chooses which object to grasp, it should know the position in space but also the orientation. From the object detection, you have only a box around the object with sides parallel to the image frame. With the fingers of the gripper configured to grasp small objects, you can grasp objects only 8 centimeters wide. So to choose the best angle, the arm makes multiple detections, maximizing or minimizing the width of the bounding box. After each detection, the hand of the arm rotates by `<rotation_step>`;
+- **model/path**: the path of the object detection model. You can change it at runtime from the control hub;
+- **vision/depth_epsilon**: the Intel RealSense d435i camera has an infrared depth camera. So you can have some configurations of the objects on the table that create some holes in the point cloud. When the model carries out the detection, it takes the center of the bounding box with the highest confidence. To avoid failing the detection right away, it tries to find a depth point around the center of the bounding box. If the point cloud has a hole, the depth is at 0 meters. You can continue searching for a valid depth point until some depth over the `<depth_epsilon>`;
 
-- **vision/depth_step**: is the count of pixel to move from the previous point;
-- **tf/rate_freq**: the frequency of the broadcast of the transform matrix from the panda_hand to the camera_link frame by the tf2 broadcaster;
-- **tf/panda_ee_link**: the name of the end effector link fram of the robot;
+![depth searching algorithm animation](assets/gifs/depth_searching.gif)
+
+- **vision/depth_step**: the count of pixel to move from the previous point;
+- **tf/rate_freq**: the frequency of the broadcast of the transform matrix from the `panda_hand` to the `camera_link` frame by the `tf2` broadcaster;
+- **tf/panda_ee_link**: the name of the end effector link frame of the robot;
 - **tf/camera_link**: the name of the camera frame;
-- **tf/tf_matrix**: the omogeneous transform matrix from the <panda_ee_link> to the <camera_link>;
-- **gui/width**: the width of the gui windows;
-- **gui/heigth**: the heigth of the gui windows;
-- **guid/columns_count**: the count of the columns of the gui
+- **tf/tf_matrix**: the homogeneous transform matrix from the `<panda_ee_link>` to the `<camera_link>`;
+- **gui/width**: the width of the GUI window;
+- **gui/heigth**: the heigth of the GUI window;
+- **guid/columns_count**: the count of the columns of the GUI.
 
 # Run the project
-You have to run the robot interface node from panda_moveit_config package, by running:
+
+You have to run the robot interface node from the `panda_moveit_config` package by executing:
 
 ```
-roslaunch panda_moveit_config franka_control.launch  robot_ip:=<robot_ip> load_gripper:=true robot:=panda
+roslaunch panda_moveit_config franka_control.launch robot_ip:=<robot_ip> load_gripper:=true robot:=panda
 ```
 
-make sure to insert your robot ip address.
+Make sure to insert your robot's IP address.
 
-Then you have to run the camera node with the color camera aligned to the depth camera:
+Then, you need to run the camera node with the color camera aligned to the depth camera:
 
 ```
 roslaunch realsense2_camera rs_camera.launch align_depth:=true
 ```
 
-Now you can start the project by running:
+Now, you can start the project by running:
 
 ```
 roslaunch panda_pick_place panda_pick_place.launch
 ```
 
-// TODO image of the control hub 
+
+![Control hub window](assets/images/control_hub.png)
 
 # Control hub
-Listed in the first row there are the nodes we need to control. Under the name of the node you have the status of the node. You can start the control when both nodes are ready. At the end of the row there is the stop button that sends the shutdown message to all the nodes. If you need to restart the nodes (i.e. the franka_control node have had an issue) you can tap on the 'Reset Nodes' button. If you want to go step by step during the pick and place (i.e. stop after the detection and ask for the command to go for the pick), turn the debug on.
 
-Then you have the row where you che change the model you want to use for the object detection.
+Listed in the first row are the nodes we need to control. Under the name of each node, you have the status of the node. You can start the control when both nodes are ready. At the end of the row, there is a stop button that sends the shutdown message to all the nodes. If you need to restart the nodes (e.g., if the `franka_control` node has an issue), you can tap on the *Reset Nodes* button. If you want to go step by step during the pick and place process (e.g., stop after the detection and ask for the command to proceed with the pick), turn the debug mode on.
 
-Eventually there are all the possible actions. Here the details:
+Then, you have the row where you can change the model you want to use for object detection.
+
+Finally, there are all the possible actions. Here are the details:
 - *Home*: homing of the arm;
-- *Open Gripper*: self explainatory;
-- *Close Gripper*: self explainatory;
-- *Set Pick Pose*: before tapping on this button move the arm at the pick position you want to have. 
+- *Open Gripper*: self-explanatory;
+- *Close Gripper*: self-explanatory;
+- *Set Pick Pose*: before tapping on this button, move the arm to the pick position you want to set.
 
 Here's how you can do it:
 
-1. Without shutting any nodes, go on the browser where you have the franka interface and set the *Programming operation*;
+1. Without shutting down any nodes, go to the browser where you have the Franka interface and set the *Programming operation*.
 
-// TODO Franka interface image
+![Franka control interface (FCI)](assets/images/fci.png)
 
-2. Light clicking both buttons on the gripper you can move the arm in the pose you want;
+2. By lightly clicking both buttons on the gripper, you can move the arm to the desired pose.
 
-3. Back on the franka interface switch in *Execution operation*;
+3. Back on the Franka interface, switch to *Execution operation*.
 
-4. Now you tap on the *Set pick pose* button on the control hub. If some error is thrown tap *Reset nodes* and try again with set pick pose button.
+4. Now tap on the *Set pick pose* button on the control hub. If an error is thrown, tap *Reset nodes* and try again with the *Set pick pose* button.
 
 Back to the actions on the hub:
 
 - *Set Place Pose*: you can set as many poses as specified in the config file;
-- *Start Detection*: make a single detection;
-- *Pick and Place*: make a single pick and place operation;
-- *Go to Pick Pose*: make the arm go to the pick pose;
-- *Go to Place Pose*: make the arm go to the place pose;
-- *Clean Table*: start the routine of pick placing object until there's nothing to grasp any more.
+- *Start Detection*: perform a single detection;
+- *Pick and Place*: perform a single pick and place operation;
+- *Go to Pick Pose*: move the arm to the pick pose;
+- *Go to Place Pose*: move the arm to the place pose;
+- *Clean Table*: start the routine of picking and placing objects until there is nothing left to grasp.
 
 # Roadmap
-I will explain some of the problem that can be evalueated.
+I will explain some of the problems that can be evaluated.
 
-1. The debug is not working properly. When reached a breakpoint the operator node should print a message on the debug topic (i.e. '/panda_pick_place/debug') and wait for the go message. There is some bug or may be rethinked the algorithm.
+1. The debug is not working properly. When reaching a breakpoint, the operator node should print a message on the debug topic (i.e., `/panda_pick_place/debug`) and wait for the go message. There is some bug, or maybe the algorithm needs to be rethought.
 
-2. At start of pick pose routine, the arm is in the pick pose where make first detection. When it chooses object to grasp, it lowers a bit over it and starts the process to optimize picking angle. If there are close object with high detectability the computer vision can detect another object different from the first choice. Is there a better way to do it?
+2. At the start of the pick pose routine, the arm is in the pick pose where it makes the first detection. When it chooses an object to grasp, it lowers a bit over it and starts the process to optimize the picking angle. If there are close objects with high detectability, the computer vision can detect another object different from the first choice. Is there a better way to do it?
 
-3. During my research the arm controller plans the trajectory from a pose to another optimizing some parameters. Thus can happen to see it choose a long and dangerous trajectory that can also lead to reach joint velocity limits. You can plan the trajectory using some waypoints or place virtual obstacols to force the trajectory?
+3. During my research, the arm controller plans the trajectory from one pose to another by optimizing some parameters. Thus, it can happen that it chooses a long and dangerous trajectory that can also lead to reaching joint velocity limits. Can you plan the trajectory using some waypoints or place virtual obstacles to force the trajectory?
 
-4. Object distorsion leads to arm collision with hard objects
+4. In the image below, you can see that the top of the blue-highlighted can is detected not with a square bounding box but as a rectangle. This leads the gripper to position itself not in the center of the top circle but maybe a little bit lower (imagine it’s trying to grasp the object vertically). Since the can is almost as large as the gripper width, it can cause trouble. Thus, object distortion leads to arm collision with hard objects. So, some distortion compensation is necessary.
+
+![Object distortion](assets/images/distortion_example.png)
 
 # My project
-I choose to train the object detection model to recognize plastic bottle or cups and cans. So the goal of this experiment was to throw on a table some mixed object of these two classes and then put each object in the correct box.
+I chose to train the object detection model to recognize plastic bottles, cups, and cans. The goal of this experiment was to throw some mixed objects of these two classes on a table and then put each object in the correct box.
 
 I leave you with the routine that closes the project.
 
-// TODO VIdeo dell'esperimento
+#![Clean table routine](assets/videos/final_video.mp4)
 
+Special thanks go to Professor Benedetto Allotta for giving me the opportunity to work with the arm, Mirco Vangi for patiently listening and giving me a big hand every day in the lab, Nicola Secciani for the valuable advice, and the entire Unifi Robotics team.
 
-Special thanks goes to professor Benedetto Allotta for giving me the opportunity to play with the arm, Mirco Vangi for patiently listen and giving me a big hand every day in the lab, Nicola Secciani for the big and precious advice and all the Unifi Robotics team.
-
-*Giuseppe A. Dimola, University of Florece.*
+*Giuseppe A. Dimola, University of Florence.*
