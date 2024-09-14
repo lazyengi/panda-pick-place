@@ -1,7 +1,7 @@
 ![University of Florence logo](assets/images/logo_unifi_500.jpg)
 # Introduction
 
-![Final video demo](assets/gifs/final_exp_zip.gif)
+![Final video demo](assets/gifs/final_tesi_zip.gif)
 
 This project is part of the thesis work for the bachelor's degree program in Electronic and Telecommunications Engineering, Automation track, at the University of Florence.
 The goal is to set up the Panda robot from Franka Emika for pick and place operation. The idea is to realize a project as modular and open to update as possible.
