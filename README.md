@@ -148,7 +148,9 @@ I chose to train the object detection model to recognize plastic bottles, cups, 
 
 I leave you with the routine that closes the project.
 
-#![Clean table routine](assets/videos/final_video.mp4)
+https://github.com/user-attachments/assets/b3c624d2-62d7-40c4-b38a-f86eefe727ce
+
+
 
 Special thanks go to Professor Benedetto Allotta for giving me the opportunity to work with the arm, Mirco Vangi for patiently listening and giving me a big hand every day in the lab, Nicola Secciani for the valuable advice, and the entire Unifi Robotics team.
 
